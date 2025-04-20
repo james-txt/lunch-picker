@@ -202,7 +202,7 @@ export default function Page() {
           <TabsContent value="picker">
             <div className="max-w-lg mx-auto">
               <Button onClick={weightedPick} className="w-full mb-4 bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
-                Pick for me
+                Pick for Me
               </Button>
               {picked && (
                 <Card className="mt-6 border border-primary/20 shadow">

@@ -185,11 +185,6 @@ export default function Page() {
   return (
     <div className="p-6 mt-16 bg-background min-h-screen flex flex-col">
       <>
-        {error && (
-          <div className="max-w-2xl mx-auto mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
         <div className="max-w-2xl mx-auto mb-8">
           <h1 className="text-4xl font-bold text-center text-primary text-shadow-xs text-shadow-slate-300 tracking-tight">
             Lunch Picker
@@ -300,12 +295,14 @@ export default function Page() {
                           </div>
                         </TableHead>
                       ))}
-                      <TableHead>
-                        <div className="flex items-center gap-1">
-                          <Map className="h-4 w-4" />
-                          <span>Maps</span>
-                        </div>
-                      </TableHead>
+                      {!error && (
+                        <TableHead>
+                          <div className="flex items-center gap-1">
+                            <Map className="h-4 w-4" />
+                            <span>Maps</span>
+                          </div>
+                        </TableHead>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -335,16 +332,18 @@ export default function Page() {
                               )}
                             </TableCell>
                           ))}
-                        <TableCell>
-                          <a
-                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + ' ' + r.address)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
-                          >
-                            <Map className="h-4 w-4" />
-                          </a>
-                        </TableCell>
+                        {!error && (
+                          <TableCell>
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + ' ' + r.address)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
+                            >
+                              <Map className="h-4 w-4" />
+                            </a>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

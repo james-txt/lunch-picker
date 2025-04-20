@@ -1,59 +1,83 @@
-// app/page.tsx (Next.js App Router)
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowUp, ArrowDown, Clock, MapPin, UtensilsCrossed, DollarSign, Hash } from 'lucide-react'
 import Rating from '@/components/ui/rating'
+import { supabase } from '@/utils/supabase'
 
-const initialRestaurants = [
-  {
-    Name: 'Sliders Grill & Bar - Plainville, CT',
-    Reviews: '4.2(1,106)',
-    Cost: '$10–20',
-    Type: 'Restaurant',
-    Address: '88 New Britain Ave',
-    Time: 'Open ⋅ Closes 11 PM',
-    TimesPicked: 0,
-  },
-  {
-    Name: 'First & Last Tavern Plainville',
-    Reviews: '4.1(1,062)',
-    Cost: '$20–30',
-    Type: 'Italian',
-    Address: '32 Cooke St',
-    Time: 'Open ⋅ Closes 8:30 PM',
-    TimesPicked: 0,
-  },
-  {
-    Name: 'Mykonos Express',
-    Reviews: '5.0(9)',
-    Cost: null,
-    Type: 'Restaurant',
-    Address: '17 Farmington Ave',
-    Time: null,
-    TimesPicked: 0,
-  },
-]
+
+interface Restaurant {
+  id: string
+  name: string | null
+  reviews: string | null
+  cost: string | null
+  type: string | null
+  address: string | null
+  time: string | null
+  times_picked: number
+}
 
 export default function Page() {
-  const [restaurants, setRestaurants] = useState(initialRestaurants)
-  const [picked, setPicked] = useState<typeof initialRestaurants[0] | null>(null)
-  const [sortConfig, setSortConfig] = useState<{ key: keyof typeof initialRestaurants[0]; direction: 'asc' | 'desc' } | null>(null)
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([])
+  const [picked, setPicked] = useState<Restaurant | null>(null)
+  const [sortConfig, setSortConfig] = useState<{ key: keyof Restaurant; direction: 'asc' | 'desc' } | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  function weightedPick() {
-    const weights = restaurants.map(r => 1 / (r.TimesPicked + 1))
+  useEffect(() => {
+    let mounted = true;
+    
+    async function fetchRestaurants(retryCount = 0) {
+      try {
+        const { data, error } = await supabase
+          .from('restaurants')
+          .select('*')
+        
+        if (error) throw error
+        
+        if (mounted && data) {
+          setRestaurants(data)
+          setError(null)
+        }
+      } catch (err: any) {
+        console.error('Error fetching restaurants:', err)
+        if (retryCount < 3 && mounted) {
+          setTimeout(() => fetchRestaurants(retryCount + 1), 1000 * (retryCount + 1))
+        } else if (mounted) {
+          setError('Failed to load restaurants. Please refresh the page.')
+        }
+      }
+    }
+
+    fetchRestaurants()
+    return () => { mounted = false }
+  }, [])
+
+  async function weightedPick() {
+    const weights = restaurants.map(r => 1 / (r.times_picked + 1))
     const total = weights.reduce((a, b) => a + b, 0)
     const rand = Math.random() * total
     let acc = 0
+    
     for (let i = 0; i < restaurants.length; i++) {
       acc += weights[i]
       if (rand < acc) {
+        const restaurant = restaurants[i]
+        const { error } = await supabase
+          .from('restaurants')
+          .update({ times_picked: restaurant.times_picked + 1 })
+          .eq('id', restaurant.id)
+        
+        if (error) {
+          setError('Failed to update pick count')
+          return
+        }
+
         const newRestaurants = [...restaurants]
-        newRestaurants[i].TimesPicked++
+        newRestaurants[i].times_picked++
         setRestaurants(newRestaurants)
         setPicked(newRestaurants[i])
         break
@@ -61,12 +85,22 @@ export default function Page() {
     }
   }
 
-  function resetPicks() {
-    setRestaurants(restaurants.map(r => ({ ...r, TimesPicked: 0 })))
+  async function resetPicks() {
+    const { error } = await supabase
+      .from('restaurants')
+      .update({ times_picked: 0 })
+      .neq('id', '')  // Update all rows
+
+    if (error) {
+      setError('Failed to reset pick counts')
+      return
+    }
+
+    setRestaurants(restaurants.map(r => ({ ...r, times_picked: 0 })))
     setPicked(null)
   }
 
-  function sortTable(key: keyof typeof initialRestaurants[0]) {
+  function sortTable(key: keyof Restaurant) {
     let direction: 'asc' | 'desc' = 'asc'
     if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
       direction = 'desc'
@@ -84,6 +118,7 @@ export default function Page() {
 
   return (
     <main className="p-6 mt-16 bg-background min-h-screen flex flex-col">
+      {error && <div className="max-w-2xl mx-auto mb-4 p-4 bg-red-100 text-red-700 rounded-xl">{error}</div>}
       <div className="max-w-2xl mx-auto mb-8">
         <h1 className="text-4xl font-bold text-center text-primary text-shadow-xs text-shadow-slate-300 tracking-tight">Lunch Picker</h1>
       </div>
@@ -104,34 +139,40 @@ export default function Page() {
             {picked && (
               <Card className="mt-6 border border-primary/20 shadow">
                 <CardContent className="space-y-3">
-                  <h2 className="text-2xl font-semibold text-primary">{picked.Name}</h2>
+                  <h2 className="text-2xl font-semibold text-primary">{picked.name}</h2>
                   <div className="flex items-center gap-2">
-                    <Rating rating={parseFloat(picked.Reviews.split('(')[0])} showValue={true} size={20}/>
-                    <span className="text-sm">({picked.Reviews.split('(')[1].replace(')', '')} reviews)</span>
+                    {picked.reviews ? (
+                      <>
+                        <Rating rating={parseFloat(picked.reviews.split('(')[0])} showValue={true} size={20}/>
+                        <span className="text-sm">({picked.reviews.split('(')[1].replace(')', '')} reviews)</span>
+                      </>
+                    ) : (
+                      <span className="text-sm">No reviews available</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <UtensilsCrossed className="h-4 w-4" />
-                    <span>{picked.Type}</span>
+                    <span>{picked.type}</span>
                   </div>
-                  {picked.Cost && (
+                  {picked.cost && (
                     <div className="flex items-center gap-2">
                       <DollarSign className="h-4 w-4" />
-                      <span>{picked.Cost}</span>
+                      <span>{picked.cost}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
-                    <span>{picked.Address}</span>
+                    <span>{picked.address}</span>
                   </div>
-                  {picked.Time && (
+                  {picked.time && (
                     <div className="flex items-center gap-2">
                       <Clock className="h-4 w-4" />
-                      <span>{picked.Time}</span>
+                      <span>{picked.time}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-2">
                     <Hash className="h-4 w-4" />
-                    <span>Picked: {picked.TimesPicked}</span>
+                    <span>Picked: {picked.times_picked}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -145,30 +186,30 @@ export default function Page() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-b border-primary/10">
-                    {Object.keys(initialRestaurants[0]).map(key => (
+                    {Object.keys(restaurants[0] || {}).map(key => (
                       <TableHead key={key} onClick={() => sortTable(key as any)} className="cursor-pointer">
                         <div className="flex items-center gap-1">
-                          {key === 'TimesPicked' ? (
+                          {key === 'times_picked' ? (
                             <div className="flex items-center gap-1">
                               <Hash className="h-4 w-4" />
                               <span>Picked</span>
                             </div>
-                          ) : key === 'Type' ? (
+                          ) : key === 'type' ? (
                             <div className="flex items-center gap-1">
                               <UtensilsCrossed className="h-4 w-4" />
                               <span>{key}</span>
                             </div>
-                          ) : key === 'Address' ? (
+                          ) : key === 'address' ? (
                             <div className="flex items-center gap-1">
                               <MapPin className="h-4 w-4" />
                               <span>{key}</span>
                             </div>
-                          ) : key === 'Time' ? (
+                          ) : key === 'time' ? (
                             <div className="flex items-center gap-1">
                               <Clock className="h-4 w-4" />
                               <span>{key}</span>
                             </div>
-                          ) : key === 'Cost' ? (
+                          ) : key === 'cost' ? (
                             <div className="flex items-center gap-1">
                               <DollarSign className="h-4 w-4" />
                               <span>{key}</span>
@@ -191,7 +232,7 @@ export default function Page() {
                     <TableRow key={i} className="border-b border-primary/5 hover:bg-accent/5 transition-colors">
                       {Object.entries(r).map(([key, value], j) => (
                         <TableCell key={j}>
-                          {key === 'Reviews' ? (
+                          {key === 'reviews' ? (
                             <div className="flex items-center gap-2">
                               {typeof value === 'string' && value.includes('(') ? (
                                 <>

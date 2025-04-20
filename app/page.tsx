@@ -183,9 +183,9 @@ export default function Page() {
   }
 
   return (
-    <div className="p-6 mt-16 bg-background min-h-screen flex flex-col">
+    <div className="p-6 mt-8 bg-background min-h-screen flex flex-col">
       <>
-        <div className="max-w-2xl mx-auto mb-8">
+        <div className="max-w-2xl mx-auto my-8">
           <h1 className="text-4xl font-bold text-center text-primary text-shadow-xs text-shadow-slate-300 tracking-tight">
             Lunch Picker
           </h1>
@@ -201,7 +201,7 @@ export default function Page() {
 
           <TabsContent value="picker">
             <div className="max-w-lg mx-auto">
-              <Button onClick={weightedPick} className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
+              <Button onClick={weightedPick} className="w-full mb-4 bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
                 Pick for me
               </Button>
               {picked && (
@@ -249,11 +249,19 @@ export default function Page() {
           </TabsContent>
 
           <TabsContent value="data">
-            <div className="container mt-6 mx-auto px-4 max-w-[1200px] pb-20">
+            <div className="container mt-6 mx-auto max-w-[1200px] pb-20">
               <div className="bg-card rounded-lg border border-primary/20 shadow shadow-slate-300 overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b border-primary/10">
+                      {!error && (
+                        <TableHead>
+                          <div className="flex items-center gap-1">
+                            <Map className="h-4 w-4 " />
+                            <span>Map</span>
+                          </div>
+                        </TableHead>
+                      )}
                       {Object.keys(restaurants[0] || {})
                         .filter(key => key !== 'id')
                         .map(key => (
@@ -295,19 +303,23 @@ export default function Page() {
                           </div>
                         </TableHead>
                       ))}
-                      {!error && (
-                        <TableHead>
-                          <div className="flex items-center gap-1">
-                            <Map className="h-4 w-4" />
-                            <span>Maps</span>
-                          </div>
-                        </TableHead>
-                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {currentItems.map((r, i) => (
                       <TableRow key={r.id} className="border-b border-primary/5 hover:bg-accent/5 transition-colors">
+                        {!error && (
+                          <TableCell>
+                            <a
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + ' ' + r.address)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
+                            >
+                              <Map className="h-5 w-5" />
+                            </a>
+                          </TableCell>
+                        )}
                         {Object.entries(r)
                           .filter(([key]) => key !== 'id')
                           .map(([key, value], j) => (
@@ -332,18 +344,6 @@ export default function Page() {
                               )}
                             </TableCell>
                           ))}
-                        {!error && (
-                          <TableCell>
-                            <a
-                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + ' ' + r.address)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
-                            >
-                              <Map className="h-4 w-4" />
-                            </a>
-                          </TableCell>
-                        )}
                       </TableRow>
                     ))}
                   </TableBody>

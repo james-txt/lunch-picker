@@ -16,10 +16,10 @@ const Toaster = ({ ...props }) => {
           backgroundColor: 'white',
           border: '1px solid var(--border)',
           borderRadius: '0.75rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
           color: 'black'
         },
-        className: 'group toast group-[.toaster]:border-border group-[.toaster]:shadow-lg',
+        className: 'group toast group-[.toaster]:border-border group-[.toaster]:shadow',
       }}
       {...props}
     />

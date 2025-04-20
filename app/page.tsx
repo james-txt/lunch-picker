@@ -193,9 +193,9 @@ export default function Page() {
 
         <Tabs defaultValue="picker" className="flex-grow">
           <div className="max-w-lg mx-auto">
-            <TabsList className="grid w-full grid-cols-2 bg-card border border-primary/20 rounded-lg shadow shadow-slate-300">
-              <TabsTrigger value="picker" className="mx-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-lg transition-all">Pick for Me</TabsTrigger>
-              <TabsTrigger value="data" className="mx-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-lg transition-all">Data Table</TabsTrigger>
+            <TabsList className="grid w-full h-11 grid-cols-2 bg-card rounded-lg shadow">
+              <TabsTrigger value="picker" className="ml-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-l-md rounded-r-none transition-all">Pick for Me</TabsTrigger>
+              <TabsTrigger value="data" className="mr-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-r-md rounded-l-none transition-all">Data Table</TabsTrigger>
             </TabsList>
           </div>
 

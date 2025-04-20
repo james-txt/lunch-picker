@@ -52,6 +52,8 @@ export default function Page() {
   )
 
   useEffect(() => {
+    if (!supabase) return
+
     const fetchRestaurants = async () => {
       try {
         const { data, error } = await supabase

@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js'
 
-// Only initialize client if we're in the browser
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
+let supabaseInstance: any = null
 
+function createSupabaseClient() {
+  if (typeof window === 'undefined') return null
+  
+  if (!supabaseInstance) {
+    supabaseInstance = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  }
+  
+  return supabaseInstance
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const getSupabase = () => {
+  return createSupabaseClient()
+}

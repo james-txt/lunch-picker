@@ -7,9 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ArrowUp, ArrowDown, Clock, MapPin, UtensilsCrossed, DollarSign, Hash, ChevronLeft, ChevronRight, Map } from 'lucide-react'
 import Rating from '@/components/ui/rating'
-import { supabase } from '@/utils/supabase'
 import { toast } from 'sonner'
-
+import { useSupabase } from '@/hooks/useSupabase'
 
 interface Restaurant {
   id: string
@@ -34,6 +33,7 @@ const isValidRestaurant = (data: any): data is Restaurant => {
 }
 
 export default function Page() {
+  const supabase = useSupabase()
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
   const [picked, setPicked] = useState<Restaurant | null>(null)
   const [sortConfig, setSortConfig] = useState<{ key: keyof Restaurant; direction: 'asc' | 'desc' } | null>(null)
@@ -49,6 +49,8 @@ export default function Page() {
   )
 
   useEffect(() => {
+    if (!supabase) return
+
     const fetchRestaurants = async () => {
       try {
         const { data, error } = await supabase
@@ -60,13 +62,14 @@ export default function Page() {
         if (data) {
           const validatedData = data
             .filter(isValidRestaurant)
-            .map(r => ({
+            .map((r: Restaurant) => ({
               ...r,
               times_picked: Number(r.times_picked)
             }))
           setRestaurants(validatedData)
         }
       } catch (err: any) {
+        console.error('Error fetching restaurants:', err)
         setError('Failed to load restaurants')
         toast.error('Failed to load restaurants')
       } finally {
@@ -75,9 +78,11 @@ export default function Page() {
     }
 
     fetchRestaurants()
-  }, [])
+  }, [supabase])
 
   const weightedPick = async () => {
+    if (!supabase) return
+
     const weights = restaurants.map(r => 1 / (Number(r.times_picked) + 1))
     const total = weights.reduce((a, b) => a + b, 0)
     const rand = Math.random() * total
@@ -112,6 +117,7 @@ export default function Page() {
   }
 
   const resetPicks = async () => {
+    if (!supabase) return
     if (hasReset) {
       toast.error('Reset has already been used')
       return
@@ -176,7 +182,7 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
+      <div className="flex justify-center items-center h-[45vh]">
         <div className="text-primary text-xl">Loading...</div>
       </div>
     )

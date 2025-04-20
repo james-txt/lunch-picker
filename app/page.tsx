@@ -1,103 +1,229 @@
-import Image from "next/image";
+// app/page.tsx (Next.js App Router)
+'use client'
 
-export default function Home() {
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ArrowUp, ArrowDown, Clock, MapPin, UtensilsCrossed, DollarSign, Hash } from 'lucide-react'
+import Rating from '@/components/ui/rating'
+
+const initialRestaurants = [
+  {
+    Name: 'Sliders Grill & Bar - Plainville, CT',
+    Reviews: '4.2(1,106)',
+    Cost: '$10–20',
+    Type: 'Restaurant',
+    Address: '88 New Britain Ave',
+    Time: 'Open ⋅ Closes 11 PM',
+    TimesPicked: 0,
+  },
+  {
+    Name: 'First & Last Tavern Plainville',
+    Reviews: '4.1(1,062)',
+    Cost: '$20–30',
+    Type: 'Italian',
+    Address: '32 Cooke St',
+    Time: 'Open ⋅ Closes 8:30 PM',
+    TimesPicked: 0,
+  },
+  {
+    Name: 'Mykonos Express',
+    Reviews: '5.0(9)',
+    Cost: null,
+    Type: 'Restaurant',
+    Address: '17 Farmington Ave',
+    Time: null,
+    TimesPicked: 0,
+  },
+]
+
+export default function Page() {
+  const [restaurants, setRestaurants] = useState(initialRestaurants)
+  const [picked, setPicked] = useState<typeof initialRestaurants[0] | null>(null)
+  const [sortConfig, setSortConfig] = useState<{ key: keyof typeof initialRestaurants[0]; direction: 'asc' | 'desc' } | null>(null)
+
+  function weightedPick() {
+    const weights = restaurants.map(r => 1 / (r.TimesPicked + 1))
+    const total = weights.reduce((a, b) => a + b, 0)
+    const rand = Math.random() * total
+    let acc = 0
+    for (let i = 0; i < restaurants.length; i++) {
+      acc += weights[i]
+      if (rand < acc) {
+        const newRestaurants = [...restaurants]
+        newRestaurants[i].TimesPicked++
+        setRestaurants(newRestaurants)
+        setPicked(newRestaurants[i])
+        break
+      }
+    }
+  }
+
+  function resetPicks() {
+    setRestaurants(restaurants.map(r => ({ ...r, TimesPicked: 0 })))
+    setPicked(null)
+  }
+
+  function sortTable(key: keyof typeof initialRestaurants[0]) {
+    let direction: 'asc' | 'desc' = 'asc'
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc'
+    }
+    const sorted = [...restaurants].sort((a, b) => {
+      if (a[key] === null) return 1
+      if (b[key] === null) return -1
+      if (a[key]! < b[key]!) return direction === 'asc' ? -1 : 1
+      if (a[key]! > b[key]!) return direction === 'asc' ? 1 : -1
+      return 0
+    })
+    setSortConfig({ key, direction })
+    setRestaurants(sorted)
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <main className="p-6 mt-16 bg-background min-h-screen flex flex-col">
+      <div className="max-w-2xl mx-auto mb-8">
+        <h1 className="text-4xl font-bold text-center text-primary text-shadow-xs text-shadow-slate-300 tracking-tight">Lunch Picker</h1>
+      </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <Tabs defaultValue="picker" className="flex-grow">
+        <div className="max-w-lg mx-auto">
+          <TabsList className="grid w-full grid-cols-2 bg-card border border-primary/20 rounded-xl shadow shadow-slate-300">
+            <TabsTrigger value="picker" className="mx-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-lg transition-all">Pick for Me</TabsTrigger>
+            <TabsTrigger value="data" className="mx-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-lg transition-all">Data Table</TabsTrigger>
+          </TabsList>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+
+        <TabsContent value="picker">
+          <div className="max-w-lg mx-auto">
+            <Button onClick={weightedPick} className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
+              Pick for me
+            </Button>
+            {picked && (
+              <Card className="mt-6 border border-primary/20 shadow">
+                <CardContent className="space-y-3">
+                  <h2 className="text-2xl font-semibold text-primary">{picked.Name}</h2>
+                  <div className="flex items-center gap-2">
+                    <Rating rating={parseFloat(picked.Reviews.split('(')[0])} showValue={true} size={20}/>
+                    <span className="text-sm">({picked.Reviews.split('(')[1].replace(')', '')} reviews)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UtensilsCrossed className="h-4 w-4" />
+                    <span>{picked.Type}</span>
+                  </div>
+                  {picked.Cost && (
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span>{picked.Cost}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>{picked.Address}</span>
+                  </div>
+                  {picked.Time && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{picked.Time}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    <span>Picked: {picked.TimesPicked}</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="data">
+          <div className="container mt-6 mx-auto px-4 max-w-[1200px] pb-20">
+            <div className="bg-card rounded-xl border border-primary/20 shadow shadow-slate-300 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-b border-primary/10">
+                    {Object.keys(initialRestaurants[0]).map(key => (
+                      <TableHead key={key} onClick={() => sortTable(key as any)} className="cursor-pointer">
+                        <div className="flex items-center gap-1">
+                          {key === 'TimesPicked' ? (
+                            <div className="flex items-center gap-1">
+                              <Hash className="h-4 w-4" />
+                              <span>Picked</span>
+                            </div>
+                          ) : key === 'Type' ? (
+                            <div className="flex items-center gap-1">
+                              <UtensilsCrossed className="h-4 w-4" />
+                              <span>{key}</span>
+                            </div>
+                          ) : key === 'Address' ? (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-4 w-4" />
+                              <span>{key}</span>
+                            </div>
+                          ) : key === 'Time' ? (
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>{key}</span>
+                            </div>
+                          ) : key === 'Cost' ? (
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-4 w-4" />
+                              <span>{key}</span>
+                            </div>
+                          ) : key}
+                          {sortConfig?.key === key && (
+                            sortConfig.direction === 'asc' ? (
+                              <ArrowUp className="h-4 w-4" />
+                            ) : (
+                              <ArrowDown className="h-4 w-4" />
+                            )
+                          )}
+                        </div>
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {restaurants.map((r, i) => (
+                    <TableRow key={i} className="border-b border-primary/5 hover:bg-accent/5 transition-colors">
+                      {Object.entries(r).map(([key, value], j) => (
+                        <TableCell key={j}>
+                          {key === 'Reviews' ? (
+                            <div className="flex items-center gap-2">
+                              {typeof value === 'string' && value.includes('(') ? (
+                                <>
+                                  <Rating rating={parseFloat(value.split('(')[0])} size={20} className="rating" />
+                                  <span className="text-sm">({value.split('(')[1].replace(')', '')})</span>
+                                </>
+                              ) : (
+                                '-'
+                              )}
+                            </div>
+                          ) : (
+                            <span>{value ?? '-'}</span>
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-center mt-6">
+              <Button 
+                onClick={resetPicks} 
+                variant="destructive" 
+                className="px-6 py-2 rounded-xl shadow shadow-slate-300 transition-all cursor-pointer active:bg-red-500"
+              >
+                Reset All
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
+    </main>
+  )
 }

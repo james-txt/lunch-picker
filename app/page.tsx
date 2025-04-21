@@ -343,7 +343,7 @@ export default function Page() {
                               rel="noopener noreferrer"
                               className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
                             >
-                              <Map className="h-5 w-5" />
+                              <Map className="h-7 w-7" />
                             </a>
                           </TableCell>
                         )}
@@ -405,7 +405,7 @@ export default function Page() {
                   onClick={resetPicks} 
      
                   disabled={hasReset}
-                  className="px-6 py-2 mt-8 rounded-lg shadow shadow-slate-300 transition-all cursor-pointer bg-rose-900/25 active:bg-rose-400"
+                  className="px-6 py-2 mt-8 rounded-lg shadow-xs shadow-slate-300 transition-all cursor-pointer bg-rose-900/25 active:bg-rose-400"
                 >
                   {hasReset ? 'Reset Used' : 'Reset All'}
                 </Button>

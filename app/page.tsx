@@ -212,7 +212,13 @@ export default function Page() {
           </h1>
         </div>
 
-        <Tabs defaultValue="picker" className="flex-grow">
+        <Tabs defaultValue="picker" className="flex-grow" onValueChange={(value) => {
+          if (value === 'data') {
+            const sorted = [...restaurants].sort((a, b) => b.times_picked - a.times_picked)
+            setRestaurants(sorted)
+            setSortConfig({ key: 'times_picked', direction: 'desc' })
+          }
+        }}>
           <div className="max-w-lg mx-auto">
             <TabsList className="grid w-full h-11 grid-cols-2 bg-card rounded-lg shadow">
               <TabsTrigger value="picker" className="ml-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-l-md rounded-r-none transition-all">Pick for Me</TabsTrigger>

@@ -190,7 +190,7 @@ export default function Page() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-[45vh]">
-        <div className="text-primary text-xl">Loading...</div>
+        <div className="text-primary text-shadow-xs text-shadow-slate-300 text-4xl">Loading...</div>
       </div>
     )
   }
@@ -403,9 +403,9 @@ export default function Page() {
               <div className="flex justify-center mt-6">
                 <Button 
                   onClick={resetPicks} 
-                  variant="destructive" 
+     
                   disabled={hasReset}
-                  className="px-6 py-2 rounded-xl shadow shadow-slate-300 transition-all cursor-pointer active:bg-red-500"
+                  className="px-6 py-2 mt-8 rounded-lg shadow shadow-slate-300 transition-all cursor-pointer bg-rose-900/25 active:bg-rose-400"
                 >
                   {hasReset ? 'Reset Used' : 'Reset All'}
                 </Button>

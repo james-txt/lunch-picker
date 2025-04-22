@@ -384,7 +384,7 @@ export default function Page() {
                         {Object.entries(r)
                           .filter(([key]) => key !== 'id')
                           .map(([key, value], j) => (
-                            <TableCell key={j} className={key === 'times_picked' ? 'text-right' : ''}>
+                            <TableCell key={j} className={key === 'times_picked' ? 'text-center' : ''}>
                               {key === 'reviews' ? (
                                 <div className="flex items-center gap-2">
                                   {typeof value === 'string' && value.includes('(') ? (

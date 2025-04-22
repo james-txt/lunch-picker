@@ -9,6 +9,7 @@ import { ArrowUp, ArrowDown, Clock, MapPin, UtensilsCrossed, DollarSign, Hash, C
 import Rating from '@/components/ui/rating'
 import { toast } from 'sonner'
 import { useSupabase } from '@/hooks/useSupabase'
+import { Input } from '@/components/ui/input'
 
 interface Restaurant {
   id: string
@@ -44,9 +45,17 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasReset, setHasReset] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
   const itemsPerPage = 10
-  const totalPages = Math.ceil(restaurants.length / itemsPerPage)
-  const currentItems = restaurants.slice(
+
+  const filteredItems = restaurants.filter(r => 
+    r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.address.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+  const currentItems = filteredItems.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
@@ -181,6 +190,7 @@ export default function Page() {
     
     setSortConfig({ key, direction })
     setRestaurants(sorted)
+    setCurrentPage(1) // Reset pagination when sorting
   }
 
   const capitalizeFirst = (str: string) => {
@@ -210,6 +220,9 @@ export default function Page() {
           <h1 className="text-4xl font-bold text-center text-primary text-shadow-xs text-shadow-slate-300 tracking-tight">
             Lunch Picker
           </h1>
+          <p className="text-center font-medium text-muted-foreground mt-2">
+            {restaurants.length} restaurants available
+          </p>
         </div>
 
         <Tabs defaultValue="picker" className="flex-grow" onValueChange={(value) => {
@@ -217,10 +230,11 @@ export default function Page() {
             const sorted = [...restaurants].sort((a, b) => b.times_picked - a.times_picked)
             setRestaurants(sorted)
             setSortConfig({ key: 'times_picked', direction: 'desc' })
+            setCurrentPage(1) // Reset pagination when switching to data table
           }
         }}>
           <div className="max-w-lg mx-auto">
-            <TabsList className="grid w-full h-11 grid-cols-2 bg-card rounded-lg shadow">
+            <TabsList className="grid w-full h-11 mb-5 grid-cols-2 bg-card rounded-lg shadow">
               <TabsTrigger value="picker" className="ml-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-l-md rounded-r-none transition-all">Pick for Me</TabsTrigger>
               <TabsTrigger value="data" className="mr-1 data-[state=inactive]:hover:bg-primary/30 data-[state=inactive]:cursor-pointer data-[state=active]:bg-primary data-[state=active]:text-white data-[state=inactive]:bg-rose-950/5 rounded-r-md rounded-l-none transition-all">Data Table</TabsTrigger>
             </TabsList>
@@ -228,13 +242,23 @@ export default function Page() {
 
           <TabsContent value="picker">
             <div className="max-w-lg mx-auto">
-              <Button onClick={weightedPick} className="w-full mb-4 bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
+              <Button onClick={weightedPick} className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-lg border border-primary/20 cursor-pointer shadow shadow-slate-300 transition-all mt-1 active:bg-rose-300">
                 Pick for Me
               </Button>
               {picked && (
                 <Card className="mt-6 border border-primary/20 shadow">
                   <CardContent className="space-y-3">
-                    <h2 className="text-2xl font-semibold text-primary">{picked.name}</h2>
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-2xl font-semibold text-primary">{picked.name}</h2>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(picked.name + ' ' + picked.address)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center w-8 h-8 text-primary hover:text-primary/80 transition-colors"
+                      >
+                        <Map className="h-6 w-6" />
+                      </a>
+                    </div>
                     <div className="flex items-center gap-2">
                       {picked.reviews ? (
                         <>
@@ -277,6 +301,17 @@ export default function Page() {
 
           <TabsContent value="data">
             <div className="container mt-6 mx-auto max-w-[1200px] pb-20">
+              <div className="mb-6">
+                <Input
+                  placeholder="Search restaurants..."
+                  value={searchTerm}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    setSearchTerm(e.target.value)
+                    setCurrentPage(1) // Reset to first page on search
+                  }}
+                  className="max-w-sm bg-rose-950/5 mx-auto"
+                />
+              </div>
               <div className="bg-card rounded-lg border border-primary/20 shadow shadow-slate-300 overflow-hidden">
                 <Table>
                   <TableHeader>
@@ -377,6 +412,16 @@ export default function Page() {
               </div>
               <div className="flex justify-center items-center gap-4 mt-4 mb-6">
                 <Button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 5))}
+                  disabled={currentPage <= 5}
+                  variant="outline"
+                  size="icon"
+                  className="cursor-pointer"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft className="h-4 w-4 -ml-2" />
+                </Button>
+                <Button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   variant="outline"
@@ -394,9 +439,18 @@ export default function Page() {
                   variant="outline"
                   size="icon"
                   className="cursor-pointer"
-
                 >
                   <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 5))}
+                  disabled={currentPage > totalPages - 5}
+                  variant="outline"
+                  size="icon"
+                  className="cursor-pointer"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4 -ml-2" />
                 </Button>
               </div>
               <div className="flex justify-center mt-6">
